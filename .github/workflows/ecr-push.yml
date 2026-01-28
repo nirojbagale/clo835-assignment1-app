@@ -1,0 +1,50 @@
+
+name: Build and Push Images to Amazon ECR
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (Voclabs / temporary creds)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push WEBAPP image
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          REPO: clo835-app
+          TAG: latest
+        run: |
+          ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker build -f Dockerfile -t ${REPO}:${TAG} .
+          docker tag ${REPO}:${TAG} ${ECR}/${REPO}:${TAG}
+          docker push ${ECR}/${REPO}:${TAG}
+
+      - name: Build and push MYSQL image
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          REPO: clo835-mysql
+          TAG: latest
+        run: |
+          ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker build -f Dockerfile_mysql -t ${REPO}:${TAG} .
+          docker tag ${REPO}:${TAG} ${ECR}/${REPO}:${TAG}
+          docker push ${ECR}/${REPO}:${TAG}
+
