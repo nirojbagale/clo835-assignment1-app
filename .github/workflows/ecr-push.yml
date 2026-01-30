@@ -1,13 +1,17 @@
 
+
 name: Build and Push Images to Amazon ECR
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: 823015708374
 
     steps:
       - name: Checkout source
@@ -19,15 +23,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push WEBAPP image
         env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
           REPO: clo835-app
           TAG: latest
         run: |
@@ -38,8 +43,6 @@ jobs:
 
       - name: Build and push MYSQL image
         env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
           REPO: clo835-mysql
           TAG: latest
         run: |
@@ -47,4 +50,3 @@ jobs:
           docker build -f Dockerfile_mysql -t ${REPO}:${TAG} .
           docker tag ${REPO}:${TAG} ${ECR}/${REPO}:${TAG}
           docker push ${ECR}/${REPO}:${TAG}
-
