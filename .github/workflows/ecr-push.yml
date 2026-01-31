@@ -1,9 +1,8 @@
-
 name: Build and Push Images to Amazon ECR
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build-and-push:
@@ -24,11 +23,14 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # -------------------------
+      # Build & push WEBAPP image
+      # -------------------------
       - name: Build and push WEBAPP image
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          REPO: clo835-app
+          REPO: clo835-webapp
           TAG: latest
         run: |
           ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -36,6 +38,9 @@ jobs:
           docker tag ${REPO}:${TAG} ${ECR}/${REPO}:${TAG}
           docker push ${ECR}/${REPO}:${TAG}
 
+      # -------------------------
+      # Build & push MYSQL image
+      # -------------------------
       - name: Build and push MYSQL image
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -47,4 +52,3 @@ jobs:
           docker build -f Dockerfile_mysql -t ${REPO}:${TAG} .
           docker tag ${REPO}:${TAG} ${ECR}/${REPO}:${TAG}
           docker push ${ECR}/${REPO}:${TAG}
-
